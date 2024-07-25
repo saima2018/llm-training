@@ -1,0 +1,36 @@
+version: "2.3"
+
+services:
+  train:
+    image: 192.168.1.248:10010/platform/train_env_cuda118_ubuntu22_py10:v0.2
+    entrypoint: deepspeed /workspace/train/training_scripts/train_stage_sft.py
+    build:
+      context: .
+      dockerfile: docker/cu119-ubuntu22.04-train/Dockerfile
+      network: host
+    privileged: true
+    runtime: nvidia
+#    env_file:
+#      - .env
+    environment:
+      - TZ=Asia/Shanghai
+      - OFFLOAD=false
+      - TASK_TYPE=sft
+      - MAX_SEQ_LEN=1024
+      - MODELING_NAME=gpt2
+      - MODEL_NAME_OR_PATH=/media/zjin/Data/dataset/model/gpt2
+      - TRAIN_DATA_DIR=./data/examples/data/sft
+      - TRAIN_BSZ_PER_GPU=1
+      - RESUME_TRAINING=false
+      - ZERO_MODEL_INPUT=./checkpoint
+      - RESUME_DATALOADER=false
+      - DATALOADER_STATE_PATH=./checkpoint
+    volumes:
+      - /media:/media
+      - ./:/workspace/
+#    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10M"
+        max-file: "5"

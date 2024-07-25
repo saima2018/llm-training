@@ -1,0 +1,4 @@
+default:
+  TRAIN:
+    INPUT_DIR: data_samples/sft
+    OUTPUT_DIR: output/train

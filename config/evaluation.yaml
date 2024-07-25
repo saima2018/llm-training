@@ -1,0 +1,17 @@
+default:
+  EVALUATION:
+    LOG_DIR: log
+    INPUT_DIR: data_samples/evaluation
+    OUTPUT_DIR: output/evaluation
+    EVA_MODELS:
+      chatglm_v2_0726:
+        ENABLE: TRUE
+        MODELING_NAME: chatglm_v2
+        MODEL_NAME_OR_PATH: /media/Data/dataset/model/chatglm/6B_v2
+      gpt_35:
+        ENABLE: TRUE
+        MODELING_NAME: chatgpt
+        MODEL_NAME_OR_PATH: gpt-3.5-turbo
+    EVALUATORS:
+      NLP: TRUE
+      GPT4: FALSE

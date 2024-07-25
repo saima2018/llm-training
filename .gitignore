@@ -1,0 +1,76 @@
+# Temporary files
+*.swp
+*~
+.DS_Store
+TAGS
+Python-*
+__pycache__
+
+# Compiled / optimized files
+*.py[cod]
+
+# Tests
+/.coverage
+
+# virtualenv
+/venv/
+
+# setuptools
+/build/
+/dist/
+*.egg-info/
+
+# Intellij files
+.idea/
+
+# vscode
+.vscode/
+
+# .project
+.project
+/.project
+
+# log file
+*.log
+*.log.*
+
+/.env
+/docker-compose.override.yml
+/test/storage
+
+# Development
+*.db
+.idea
+.mypy_cache/
+config.yaml
+
+# compressed file
+*.tar
+*.gz
+!*.nii.gz
+*.zip
+
+# data folder
+# **/data/
+# data/
+
+# sonarqube
+.scannerwork
+.sonar
+
+# lib
+#*.so
+
+# numpy
+*.npy
+cache_*/
+output_*/
+log/
+*.cache
+.env
+dev_env
+
+output
+flagged
+logs
+checkpoint

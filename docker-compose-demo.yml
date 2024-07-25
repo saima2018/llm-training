@@ -1,0 +1,28 @@
+version: "2.3"
+
+services:
+  demo:
+    image: 192.168.1.248:10010/platform/train_env_cuda118_ubuntu22_py10:v0.2
+    entrypoint: streamlit run deploy/dialog_demo/chat.py
+    build:
+      context: .
+      dockerfile: docker/cu119-ubuntu22.04-train/Dockerfile
+      network: host
+    privileged: true
+    runtime: nvidia
+    ports:
+      - 8501:8501
+    environment:
+      - TZ=Asia/Shanghai
+      - LOG_DIR=./log
+      - MODELING_NAME=chatglm_v2
+      - MODEL_NAME_OR_PATH=/media/zjin/Data/dataset/model/chatglm/6B_v2
+    volumes:
+      - /media:/media
+      - ./:/workspace/
+    #    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10M"
+        max-file: "5"
