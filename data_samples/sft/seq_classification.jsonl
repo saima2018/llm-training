@@ -1,0 +1,7 @@
+{"input": "How many orders have i placed so far?", "label": 0}
+{"input": "can i have a look at all my orders?", "label": 0}
+{"input": "could you take a look at my historical orders?", "label": 0}
+{"input": "buy 100 amazon at market price?", "label":1}
+{"input": "sell 100 apple at 240", "label":1}
+{"input": "sell all my stocks in HKSE", "label":1}
+{"input": "place a limit order valid until 24th for tesla", "label":1}

@@ -1,6 +1,6 @@
 class ModelConfig:
     """
-    提供模型的属性
+    Provides model configs
     """
 
     def __init__(

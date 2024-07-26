@@ -108,6 +108,12 @@ class TrainArgs:
         default=os.getenv("RESUME_TRAINING", default=True),
         metadata={"help": "是否从断点参数继续训练"},
     )
+
+    offload: bool = field(
+        default=os.getenv("OFFLOAD", default=False),
+        metadata={"help": "whether to offload calculation to CPU"},
+    )
+
     zero_model_input: str = field(
         default=os.getenv("ZERO_MODEL_INPUT", default=None), metadata={"help": "断点参数地址"}
     )

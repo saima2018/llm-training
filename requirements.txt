@@ -15,7 +15,7 @@ Cython==0.29.34
 dataclasses-json==0.5.7
 datasets==2.12.0
 decorator==5.1.1
-deepspeed==0.10.0
+deepspeed==0.14.4
 Deprecated==1.2.13
 easydict==1.10
 evaluate==0.4.0
@@ -28,7 +28,6 @@ h5py==3.8.0
 huggingface-hub==0.14.1
 jsonlines==3.1.0
 Jinja2==3.1.2
-#langchain==0.0.162
 loguru==0.6.0
 lxml==4.9.2
 multiprocess==0.70.12.2
@@ -50,6 +49,7 @@ streamlit-chat==0.0.2.2
 streamlit-extras
 six==1.16.0
 tqdm==4.65.0
+torch==2.3.0
 transformers==4.31.0
 trl==0.4.7
 ujson==5.7.0

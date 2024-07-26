@@ -23,7 +23,7 @@ class SFTDataset(Dataset):
         tokenizer: Optional[AutoTokenizer.from_pretrained],
         model_conf: ModelConfig,
         token_encode_function: Callable,
-        max_data_input_length: int,
+        max_seq_len: int,
         use_cache: bool = False,
         cache_dir: str = None,
         num_workers: int = 200,
@@ -31,8 +31,8 @@ class SFTDataset(Dataset):
         """
         data_dir: 数据加载地址
         tokenizer: 模型对应的tokenizer类，用以进行编码
-        model_conf: 模型的基本配置参数，如: pad_token_id: batch处理时对样本进行pad到统一长度的token_id, max_model_input_length: 模型最大token输入长度，当前常见有1024/2048/4096等
-        token_encode_function: 对文本进行token编码的函数(用以兼容不同的模型)
+        model_conf: basic model configs, such as: pad_token_id during batch processing, max_model_input_length, etc.
+        token_encode_function: text token encoding function, to adapt to different models
         max_data_input_length: 设置数据最大输入长度，超过max_model_input_length时将取max_model_input_length
         use_cache: 是否使用缓存，使用缓存时将加载上一次缓存，模型(tokenizer)或数据改变时请不要用cache,use_cache设置为False
         cache_dir: 缓存数据存储地址，为None时数据将放在data_dir文件夹里
@@ -42,9 +42,10 @@ class SFTDataset(Dataset):
         self.tokenizer = tokenizer
         self.model_conf = model_conf
         self.token_encode_function = token_encode_function
-        self.max_input_length = self._get_max_input_length(
-            self.model_conf.max_model_input_length, max_data_input_length
-        )
+        # self.max_input_length = self._get_max_input_length(
+        #     self.model_conf.max_model_input_length, max_seq_len
+        # )
+        self.max_input_length = max_seq_len
         self.use_cache = use_cache
         self.cache_dir = self._get_cache_dir(data_dir, cache_dir)
         self.train_dataset = self._load_data(
@@ -59,24 +60,24 @@ class SFTDataset(Dataset):
         return self.train_dataset[idx]["input_ids"], self.train_dataset[idx]["labels"]
 
     def _load_data(self, extensions, num_workers=200):
-        # TODO: 确认多卡训练时只加载一份数据
+        # TODO: make sure only one copy of dataset is loaded in distributed training
         logger.info("start load_data find_files_from_extension")
         # 提取后缀名符合条件的文件
         data_files = find_files_from_extension(self.data_dir, extensions)
         logger.info(f"find files: {data_files}")
 
         logger.info("start load_dataset")
-        # TODO: 检查有chche的时候数据是否会影响
+        # TODO: not using cache
         raw_datasets = load_dataset(
-            "text", data_files=data_files, cache_dir=self.cache_dir
+            "text", data_files=data_files, cache_dir=None
         )
         logger.info("start _tokenize_function")
-        # 并行对数据进行tokenize_function处理
+        # process data in parallel using tokenize_function
         train_dataset = raw_datasets.map(
             self._tokenize_function,
             batched=True,
             num_proc=num_workers,
-            remove_columns="text",
+            remove_columns=["text"],
             load_from_cache_file=self.use_cache,
             desc="Running tokenizer on dataset",
         )
@@ -92,7 +93,7 @@ class SFTDataset(Dataset):
 
     @staticmethod
     def _get_max_input_length(model_max_input_length, max_input_length):
-        # 取用户输入和模型实际最大输入长度的中更小的值作为模型输入数据长度
+        # take the smaller of user input and model max input lengths as max_input_length
         input_length = max_input_length
         if input_length > model_max_input_length:
             input_length = model_max_input_length
@@ -114,6 +115,33 @@ class SFTDataset(Dataset):
         return out_cache_dir
 
     def _tokenize_function(self, examples, text_column_name="text"):
+        model_inputs = {"input_ids": [], "labels": []}
+        for chat in examples[text_column_name]:
+            chat = json.loads(chat)
+            # 对每一轮对话进行构建ChatData
+            input_chat = ChatData(input=chat["input"])
+            labels = chat['label']
+            # 构造ModelTokenEncodeRequest进行encode
+            req = ModelTokenEncodeRequest(
+                max_input_length=self.max_input_length,
+                prompt="",
+                input_chat=input_chat,
+                chat_history="", # TODO
+            )
+            # 调用modeling的token_encode方法进行模型输入的token构建
+            input_ids = self.token_encode_function(
+                tokenizer=self.tokenizer, conf=self.model_conf, req=req
+            )
+
+            # 追加history, 本行不能放在modeling.token_encode之前，否则会导致数据重复
+            # chat_history.append(input_chat)
+            if input_ids is None:
+                continue
+            model_inputs["input_ids"].append(input_ids)
+            model_inputs["labels"].append(labels)
+        return model_inputs
+
+    def _tokenize_function_chat(self, examples, text_column_name="text"):
         model_inputs = {"input_ids": [], "labels": []}
         for chats_txt in examples[text_column_name]:
             chat_dict = json.loads(chats_txt)
@@ -161,7 +189,10 @@ class SFTDataset(Dataset):
             batch_first=True,
             padding_value=self.model_conf.pad_token_id,
         )
-        batch_targets = torch.nn.utils.rnn.pad_sequence(
-            batch_targets, batch_first=True, padding_value=self.model_conf.pad_token_id
-        )
+        print('bbbbbbbbb tttttttttt', batch_targets)
+        # batch_targets = torch.nn.utils.rnn.pad_sequence(
+        #     batch_targets, batch_first=True, padding_value=self.model_conf.pad_token_id
+        # )
+        batch_targets = torch.stack(batch_targets)
+        print('2222222222bbbbbbbbb tttttttttt', batch_targets)
         return batch_input_ids, batch_targets

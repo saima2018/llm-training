@@ -24,7 +24,6 @@ class PretrainSFTTrainer:
             for step, batch in enumerate(dataloader):
                 ids = batch[0].to(self.model.device)
                 labels = batch[1].to(self.model.device)
-
                 # batch = batch.to(self.model.device)
                 loss = self.model(input_ids=ids, labels=labels)[0]
                 self.model.backward(loss)

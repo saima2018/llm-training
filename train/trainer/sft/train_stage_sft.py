@@ -1,6 +1,8 @@
 import os
 import sys
 from typing import Optional, List
+
+import deepspeed
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
 from transformers import (HfArgumentParser, get_scheduler, set_seed, TrainerCallback,
@@ -21,6 +23,7 @@ from utils.logger import add_file_handler_to_logger, log_rank0
 from train.trainer.common import load_model_and_tokenizer
 from train.trainer.utils.constants import IGNORE_INDEX
 
+
 def train():
     # 1. 训练的参数设置, 可以通过--传参(如:--modeling_name moss)，具体参数设置参考TrainingArgs
     args: TrainArgs = HfArgumentParser((TrainArgs)).parse_args_into_dataclasses()[0]
@@ -30,7 +33,7 @@ def train():
     torch.cuda.set_device(args.local_rank)  # 默认使用 gpu 0
     # Initializes the distributed backend which will take care of synchronizing nodes/GPUs.
     # torch.distributed帮助自动创建n个进程运行在n个gpu上
-    torch.distributed.init_process_group(backend="nccl")  # 后端通信: gpu训练用nccl, cpu训练用gloo
+    torch.distributed.init_process_group(backend="nccl")  # backend communication: nccl for gpu, gloo for cpu
     device_rank = torch.distributed.get_rank()  # 分布式任务进程组group中进程的序号，默认进程数等于gpu数
 
     if device_rank <= 0:
@@ -40,7 +43,7 @@ def train():
     log_rank0("loading model...", device_rank)
     # TODO: 确认模型是否有其他参数需求
     modeling = ModelingFactory.get(
-        args.modeling_name, model_path=args.model_name_or_path
+        args.modeling_name, model_name_or_path=args.model_name_or_path
     )
 
     # 4.加载训练数据，第一次读取后会在原目录保存数据cache文件
@@ -53,7 +56,7 @@ def train():
         if args.task_type == "sft":
             log_rank0("loading dataloader from SFTDataset", device_rank)
             train_dataset = SFTDataset(
-                args.train_data_dir, modeling.tokenizer, max_length=args.max_seq_len
+                args.train_data_dir, modeling.tokenizer, modeling.config, modeling.token_encode_sft, max_seq_len=args.max_seq_len
             )
         else:
             log_rank0("loading dataloader from PretrainDataset", device_rank)
@@ -71,7 +74,11 @@ def train():
         # Todo add valdataset
 
     # 5.优化器选择
-    optimizer = torch.optim.AdamW(
+    # optimizer = torch.optim.AdamW(
+    #     modeling.model.parameters(), lr=args.learning_rate, betas=(0.9, 0.95)
+    # )
+
+    optimizer = deepspeed.ops.adam.DeepSpeedCPUAdam(
         modeling.model.parameters(), lr=args.learning_rate, betas=(0.9, 0.95)
     )
 
@@ -90,6 +97,7 @@ def train():
         args.ddp_backend,
         model=modeling.model,
         tokenizer=modeling.tokenizer,
+        # optimizer=None,
         optimizer=optimizer,
         lr_scheduler=lr_scheduler,
         args=args,

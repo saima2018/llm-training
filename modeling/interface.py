@@ -18,7 +18,7 @@ class ModelPredictRequest(BaseModel):  # 引入BaseModel方便dataclass与json�
 
 # 定义一条问答的数据结构
 class ChatData:
-    def __init__(self, input: str, output: str):
+    def __init__(self, input: str, output: str = None):
         """
         input: 用户提问
         output: AI回答

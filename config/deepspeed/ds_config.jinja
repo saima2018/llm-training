@@ -5,7 +5,10 @@
         "zero_optimization": {
         "stage": {{ stage }},
         "offload_param": {{ device }},
-        "offload_optimizer": {{ device }},
+        "offload_optimizer": {
+          "device": "cpu",
+          "pin_memory": True
+        },
         "stage3_param_persistence_threshold": 1e4,
         "stage3_max_live_parameters": 3e7,
         "stage3_prefetch_bucket_size": 3e7
@@ -21,5 +24,5 @@
             "release_inference_cache": {{ release_inference_cache }},
             "pin_parameters": {{ pin_parameters }},
             "tp_gather_partition_size": {{ tp_gather_partition_size }}
-        }
+        },
     }

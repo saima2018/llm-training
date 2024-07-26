@@ -24,7 +24,7 @@ class DeepspeedTrainer(BaseTrainer):
             * torch.distributed.get_world_size(),
             "train_micro_batch_size_per_gpu": 1,
             "offload": self.args.offload,
-            "stage": kwargs.get("zero_stage", 3),
+            "stage": kwargs.get("zero_stage", 2),
             "enable_hybrid_engine": False,
             "inference_tp_size": 1,
             "release_inference_cache": False,

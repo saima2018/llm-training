@@ -13,7 +13,7 @@ parser.add_argument(
 parser.add_argument(
     "--output_file",
     type=str,
-    default="/media/zjin/Data/dataset/datas/baidu_baike/generated_chat.jsonl",
+    default="/media/zjin/Data/dataset/datas/baidu_baike/generated_chat.jsonl.archived",
     help="输出jsonl路径",
 )
 args = parser.parse_args()

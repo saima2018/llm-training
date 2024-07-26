@@ -4,15 +4,17 @@ from .chatglm_v2.chatglm_v2_modeling import ModelChatGLMV2
 from .chatgpt.chatgpt_modeling import ModelChatGPT
 from .gpt2.gpt2_modeling import ModelGPT2
 from .llama.llama_modeling import ModelLLaMa
+from .llama3_classification.llama3_classification_modeling import ModelLLaMa3Classification
 from .moss.moss_modeling import ModelMoss
 
 
-# 工厂模式构建，提供所有对外的模型
+# Factory class to provide access of all models
 class ModelingFactory:
     factory_map = {
         "chatgpt": ModelChatGPT,
         "gpt2": ModelGPT2,
         "llama": ModelLLaMa,
+        "llama3_classification": ModelLLaMa3Classification,
         "moss": ModelMoss,
         "baichuan": ModelBaichuan,
         "baichuan_chat": ModelBaichuanChat,
@@ -20,7 +22,7 @@ class ModelingFactory:
     }
 
     @staticmethod
-    def get(modeling_name: str, model_name_or_path: str):  # 通过模型名初始化模型类
+    def get(modeling_name: str, model_name_or_path: str):  # initialise model class with model name
         """为了统一输入，当前采用model_path而非**kwargs"""
         Modeling = ModelingFactory.factory_map[modeling_name]
         return Modeling(model_name_or_path=model_name_or_path)
